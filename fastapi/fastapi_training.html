@@ -1,0 +1,3091 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="slides-format" content="viewport">
+    <title>FastAPI Corporate Training</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style type="text/tailwindcss">
+        @theme {
+      --color-bg: #0f172a;
+      --color-bg-deep: #020617;
+      --color-surface: #111c34;
+      --color-text: #f8fafc;
+      --color-text-secondary: #cbd5e1;
+      --color-text-muted: #94a3b8;
+      --color-accent-1: #06b6d4;
+      --color-accent-2: #7c3aed;
+      --color-accent-3: #22c55e;
+      --color-glass-bg: rgba(255,255,255,0.06);
+      --color-glass-border: rgba(255,255,255,0.10);
+      --color-vignette: rgba(0,0,0,0.45);
+      --font-display: 'Instrument Serif', Georgia, serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+  </style>
+    <style>
+        :root {
+            --color-bg: #0f172a;
+            --color-text: #f8fafc;
+            --glow-color-rgb: 6, 182, 212;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            background: var(--color-bg);
+            margin: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            color: var(--color-text);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            font-size: 1.125rem;
+        }
+
+        .deck {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--color-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 0.7s ease, transform 0.7s ease;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: all;
+        }
+
+        .slide>.content {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 1180px;
+            padding: clamp(1.3rem, 3.2vw, 3rem);
+        }
+
+        .nav-controls {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            left: auto;
+            transform: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(16px);
+            padding: 8px 12px;
+            border-radius: 99px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .nav-btn {
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: var(--color-glass-bg);
+            color: var(--color-accent-1);
+            border-radius: 50%;
+            font-size: 1.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: rgba(6, 182, 212, 0.25);
+            transform: scale(1.1);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+        }
+
+        .slide-dots {
+            display: none;
+        }
+
+        .slide-counter {
+            font-size: 1.1rem;
+            color: var(--color-text-muted);
+            min-width: 70px;
+            text-align: center;
+            font-weight: 600;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: color 0.2s, transform 0.2s, background 0.2s;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .slide-counter:hover {
+            color: var(--color-accent-1);
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.05);
+        }
+
+        .navigator-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(12px);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .navigator-modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .navigator-content {
+            background: var(--color-surface);
+            border: 1px solid var(--color-glass-border);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 900px;
+            height: 80vh;
+            max-height: 800px;
+            overflow-y: auto;
+            padding: 2.5rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .navigator-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .navigator-content::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .navigator-content::-webkit-scrollbar-thumb {
+            background: rgba(6, 182, 212, 0.5);
+            border-radius: 4px;
+        }
+
+        .navigator-content::-webkit-scrollbar-thumb:hover {
+            background: var(--color-accent-1);
+        }
+
+        .navigator-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--color-glass-border);
+            padding-bottom: 1rem;
+        }
+
+        .navigator-title {
+            font-family: var(--font-display);
+            font-size: 3rem;
+            color: var(--color-accent-1);
+            margin: 0;
+            font-weight: normal;
+        }
+
+        .close-nav {
+            background: none;
+            border: none;
+            color: var(--color-text-secondary);
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: color 0.2s, transform 0.2s;
+            line-height: 1;
+        }
+
+        .close-nav:hover {
+            color: #fff;
+            transform: scale(1.1);
+        }
+
+        .slide-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .slide-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--color-glass-border);
+            border-radius: 12px;
+            padding: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .slide-item:hover {
+            background: rgba(6, 182, 212, 0.15);
+            border-color: var(--color-accent-1);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .slide-item.current {
+            border-color: var(--color-accent-3);
+            background: rgba(34, 197, 94, 0.1);
+        }
+
+        .slide-item-num {
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            color: var(--color-accent-1);
+            font-weight: bold;
+        }
+
+        .slide-item-title {
+            font-size: 1.05rem;
+            color: var(--color-text);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .gradient-mesh {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(85px);
+            animation: float-slow 14s ease-in-out infinite;
+        }
+
+        .blob:nth-child(2) {
+            animation: float-drift 18s ease-in-out infinite;
+        }
+
+        .blob:nth-child(3) {
+            animation: float-slow 22s ease-in-out infinite reverse;
+        }
+
+        .blob:nth-child(4) {
+            animation: float-drift 20s ease-in-out infinite reverse;
+        }
+
+        .slide::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 256px 256px;
+            opacity: 0.03;
+            mix-blend-mode: overlay;
+        }
+
+        .slide::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 48%, var(--color-vignette) 100%);
+        }
+
+        @keyframes float-slow {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            25% {
+                transform: translate(60px, -50px) scale(1.1);
+            }
+
+            50% {
+                transform: translate(-35px, 30px) scale(0.92);
+            }
+
+            75% {
+                transform: translate(35px, 18px) scale(1.06);
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+        }
+
+        @keyframes float-drift {
+            0% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+            }
+
+            33% {
+                transform: translate(-50px, -55px) scale(1.14) rotate(3deg);
+            }
+
+            66% {
+                transform: translate(40px, 26px) scale(0.9) rotate(-2deg);
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+            }
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        .text-glow {
+            text-shadow: 0 0 20px rgba(var(--glow-color-rgb), 0.45), 0 0 50px rgba(var(--glow-color-rgb), 0.18);
+        }
+
+        .stat-glow {
+            text-shadow: 0 0 30px rgba(var(--glow-color-rgb), 0.55), 0 0 60px rgba(var(--glow-color-rgb), 0.2);
+        }
+
+        .code {
+            font-family: var(--font-mono);
+            background: rgba(2, 6, 23, 0.68);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            white-space: pre-wrap;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #dbeafe;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.2);
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .terminal {
+            font-family: var(--font-mono);
+            background: #020617;
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            white-space: pre-wrap;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #bbf7d0;
+            box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+            max-height: 50vh;
+            overflow-y: auto;
+        }
+
+        .code::-webkit-scrollbar,
+        .terminal::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .code::-webkit-scrollbar-track,
+        .terminal::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            margin: 8px;
+        }
+
+        .code::-webkit-scrollbar-thumb,
+        .terminal::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+        }
+
+        .code::-webkit-scrollbar-thumb:hover,
+        .terminal::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .note {
+            border-left: 4px solid var(--color-accent-1);
+            padding-left: 1.2rem;
+            color: var(--color-text-secondary);
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
+        .card {
+            background: var(--color-glass-bg);
+            backdrop-filter: blur(14px);
+            border: 1px solid var(--color-glass-border);
+            border-radius: 20px;
+            padding: 1.5rem 1.8rem;
+            box-shadow: 0 16px 40px rgba(2, 6, 23, 0.25);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            cursor: default;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 24px 50px rgba(2, 6, 23, 0.4), 0 0 20px rgba(var(--glow-color-rgb), 0.15);
+            border-color: rgba(var(--glow-color-rgb), 0.3);
+        }
+
+        .mini {
+            font-size: 1.05rem;
+            color: var(--color-text-muted);
+            line-height: 1.5;
+            margin-top: 0.3rem;
+        }
+
+        .section-kicker {
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            font-size: 1rem;
+            color: var(--color-accent-1);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            gap: 1.15rem;
+            align-items: start;
+        }
+
+        .three-col {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        .four-col {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.85rem;
+        }
+
+        .agenda-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.9rem 1rem;
+        }
+
+        .icon-badge {
+            width: 50px;
+            height: 50px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.26), rgba(124, 58, 237, 0.28));
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            font-size: 1.2rem;
+        }
+
+        .lifecycle {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .arrow {
+            text-align: center;
+            color: var(--color-accent-1);
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+
+        .bar-track {
+            width: 100%;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--color-accent-1), var(--color-accent-2));
+            width: 0%;
+            box-shadow: 0 0 10px rgba(var(--glow-color-rgb), 0.5);
+        }
+
+        .timeline {
+            position: relative;
+            display: grid;
+            gap: 1.2rem;
+            margin-top: 1rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 13px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(var(--color-accent-1), var(--color-accent-2));
+            border-radius: 2px;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 2.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 7px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--color-accent-1);
+            box-shadow: 0 0 18px rgba(var(--glow-color-rgb), 0.8);
+            border: 4px solid var(--color-bg);
+        }
+
+        .comparison th,
+        .comparison td {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 1rem 1.2rem;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .comparison {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+
+        .comparison th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+            color: var(--color-accent-1);
+        }
+
+        .speaker {
+            margin-top: 1.2rem;
+            padding: 1.2rem 1.5rem;
+            border-radius: 12px;
+            background: rgba(34, 197, 94, 0.12);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            font-size: 1.05rem;
+            color: #dcfce7;
+            line-height: 1.6;
+            border-left: 4px solid #22c55e;
+        }
+
+        .deco-shape {
+            position: absolute;
+            z-index: 1;
+            border-radius: 999px;
+            pointer-events: none;
+        }
+
+        .logo-hero {
+            max-height: 120px;
+            max-width: 300px;
+            object-fit: contain;
+            margin-bottom: 1.5rem;
+            filter: drop-shadow(0 10px 28px rgba(6, 182, 212, 0.25));
+            animation: float 3.5s ease-in-out infinite;
+        }
+
+        .quiz {
+            border-left: 4px solid #f59e0b;
+            background: rgba(245, 158, 11, 0.12);
+        }
+
+        .trouble {
+            border-left: 4px solid #ef4444;
+            background: rgba(239, 68, 68, 0.12);
+        }
+
+        .ok {
+            border-left: 4px solid #22c55e;
+            background: rgba(34, 197, 94, 0.12);
+        }
+
+        .tight li {
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.2s !important;
+            }
+        }
+    </style>
+
+    <style>
+        .code,
+        .terminal {
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: var(--color-text-secondary);
+            border-radius: 6px;
+            padding: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            opacity: 0;
+        }
+
+        .code:hover .copy-btn,
+        .terminal:hover .copy-btn {
+            opacity: 1;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+    </style>
+
+    <style>
+        pre.code,
+        pre.terminal {
+            margin: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="mouse-spotlight" style="position:fixed;inset:0;z-index:99;pointer-events:none;"></div>
+    <div class="deck">
+
+        <div class="slide slide-1 active" data-slide="1">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:480px;height:480px;top:-110px;right:-80px;background:var(--color-accent-1);opacity:.15">
+                </div>
+                <div class="blob"
+                    style="width:330px;height:330px;bottom:-70px;left:-50px;background:var(--color-accent-2);opacity:.13">
+                </div>
+                <div class="blob"
+                    style="width:210px;height:210px;top:42%;left:16%;background:var(--color-accent-3);opacity:.1"></div>
+            </div>
+            <canvas class="particle-canvas" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content text-center">
+                <img class="logo-hero reveal" src="https://fastapi.tiangolo.com/img/logo-margin/logo-teal.png"
+                    alt="FastAPI logo">
+                <h1
+                    class="reveal font-display text-[clamp(2.7rem,6vw,5.1rem)] font-black tracking-tight bg-linear-to-br from-accent-1 via-accent-2 to-accent-1 bg-clip-text text-transparent">
+                    FastAPI for Real-World Backend Development</h1>
+                <!-- <p
+                    class="reveal mt-4 text-[clamp(.95rem,1.6vw,1.3rem)] text-text-secondary tracking-[0.35em] uppercase">
+                    Corporate technical training for Python developers</p> -->
+                <div class="reveal mt-8 grid grid-cols-3 gap-4 max-w-4xl mx-auto text-left">
+                    <div class="card">
+                        <div class="mini">Audience</div>
+                        <div class="text-lg font-semibold">Python developers</div>
+                    </div>
+                    <div class="card">
+                        <div class="mini">Level</div>
+                        <div class="text-lg font-semibold">Beginner to intermediate</div>
+                    </div>
+                    <div class="card">
+                        <div class="mini">Outcome</div>
+                        <div class="text-lg font-semibold">Build, test, secure, and deploy APIs</div>
+                    </div>
+                </div>
+                <!-- <div class="speaker reveal">Speaker note: Open with the promise that the session moves from HTTP
+                    fundamentals to a production-style FastAPI mini project, with hands-on checkpoints after each major
+                    section.</div> -->
+            </div>
+        </div>
+
+        <div class="slide" data-slide="2">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:340px;height:340px;top:-70px;right:-50px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:260px;height:260px;bottom:-50px;left:-40px;background:var(--color-accent-2);opacity:.06">
+                </div>
+            </div>
+            <div class="content">
+                <div class="section-kicker reveal">Agenda</div>
+                <h2 class="reveal font-display text-5xl mb-6">Training roadmap</h2>
+                <div class="agenda-grid">
+                    <div class="card reveal">
+                        <div class="flex gap-3 items-start">
+                            <div class="icon-badge">1</div>
+                            <div>
+                                <div class="font-semibold">API foundations</div>
+                                <div class="mini">API, REST, HTTP, JSON, status codes</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="flex gap-3 items-start">
+                            <div class="icon-badge">2</div>
+                            <div>
+                                <div class="font-semibold">Why FastAPI</div>
+                                <div class="mini">Async, docs, type hints, validation</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="flex gap-3 items-start">
+                            <div class="icon-badge">3</div>
+                            <div>
+                                <div class="font-semibold">Setup & first app</div>
+                                <div class="mini">venv, install, project structure, run server</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="flex gap-3 items-start">
+                            <div class="icon-badge">4</div>
+                            <div>
+                                <div class="font-semibold">Core FastAPI</div>
+                                <div class="mini">Routes, params, bodies, CRUD, response models</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="flex gap-3 items-start">
+                            <div class="icon-badge">5</div>
+                            <div>
+                                <div class="font-semibold">Pydantic & async</div>
+                                <div class="mini">Validation, schemas, nested models, async endpoints</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="flex gap-3 items-start">
+                            <div class="icon-badge">6</div>
+                            <div>
+                                <div class="font-semibold">Production concerns</div>
+                                <div class="mini">Dependencies, DB, auth, middleware, testing, deploy</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="flex gap-3 items-start">
+                            <div class="icon-badge">7</div>
+                            <div>
+                                <div class="font-semibold">Mini project</div>
+                                <div class="mini">Employee Management API with auth + tests</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="flex gap-3 items-start">
+                            <div class="icon-badge">8</div>
+                            <div>
+                                <div class="font-semibold">Interactive close</div>
+                                <div class="mini">Quizzes, debugging, roadmap, Q&A</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- <div class="speaker reveal">Speaker note: Tell participants the session is intentionally practical;
+                    every theory block is followed by a small build, test, or debug task.</div> -->
+            </div>
+        </div>
+
+        <div class="slide" data-slide="3">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:420px;height:420px;top:-120px;left:-80px;background:var(--color-accent-2);opacity:.1">
+                </div>
+                <div class="blob"
+                    style="width:260px;height:260px;bottom:-60px;right:-30px;background:var(--color-accent-1);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <div class="section-kicker reveal">Introduction to APIs</div>
+                <h2 class="reveal font-display text-5xl mb-5">What is an API?</h2>
+                <div class="two-col">
+                    <div class="reveal card">
+                        <ul class="tight text-lg text-text-secondary">
+                            <li>An API is a contract that lets one software system request data or actions from another.
+                            </li>
+                            <li>Clients send requests; servers process them and return structured responses.</li>
+                            <li>Well-designed APIs separate frontend concerns from backend business logic.</li>
+                            <li>Teams use APIs to integrate web apps, mobile apps, internal services, and partner
+                                systems.</li>
+                        </ul>
+                        <div class="speaker">Speaker note: Use a restaurant analogy only briefly, then transition to
+                            enterprise examples like HR systems, payment services, or internal inventory apps.</div>
+                    </div>
+                    <div class="reveal card">
+                        <div class="text-sm uppercase tracking-[0.18em] text-text-muted mb-3">Enterprise example</div>
+                        <div class="lifecycle">
+                            <div class="card text-center">React UI</div>
+                            <div class="arrow">→</div>
+                            <div class="card text-center">FastAPI</div>
+                            <div class="arrow">→</div>
+                            <div class="card text-center">DB / Email / Auth</div>
+                        </div>
+                        <div class="mt-5 note">A trainee should leave this session able to build the middle layer:
+                            request handling, validation, business rules, persistence, and security.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="4">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:350px;height:350px;top:-90px;right:-90px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:220px;height:220px;bottom:-40px;left:-20px;background:var(--color-accent-3);opacity:.07">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-6">REST architecture basics</h2>
+                <div class="three-col">
+                    <div class="card reveal">
+                        <div class="text-2xl mb-3">🔗</div>
+                        <div class="font-semibold mb-2">Resource oriented</div>
+                        <div class="mini">Model business entities as resources like /students, /courses, /employees.
+                        </div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="text-2xl mb-3">📦</div>
+                        <div class="font-semibold mb-2">Stateless requests</div>
+                        <div class="mini">Each request includes enough context so the server does not depend on previous
+                            request state.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="text-2xl mb-3">🧭</div>
+                        <div class="font-semibold mb-2">Uniform interface</div>
+                        <div class="mini">HTTP methods, URIs, headers, and status codes provide a consistent contract.
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mt-5">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Good REST habits</div>
+                        <ul class="mini tight">
+                            <li>Nouns in URLs, not verbs.</li>
+                            <li>Predictable naming and versioning.</li>
+                            <li>Consistent error responses.</li>
+                        </ul>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Where teams slip</div>
+                        <ul class="mini tight">
+                            <li>Mixing business logic into route handlers.</li>
+                            <li>Using POST for everything.</li>
+                            <li>Returning 200 for errors.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="5">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:310px;height:310px;top:-70px;left:-30px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:260px;height:260px;bottom:-50px;right:-40px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-6">HTTP methods in practice</h2>
+                <div class="four-col">
+                    <div class="card reveal">
+                        <div class="font-semibold text-accent-1">GET</div>
+                        <div class="mini mt-2">Read data. Safe and cache-friendly.</div>
+                        <pre
+                            class="code mt-3"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>GET /students/42</pre>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold text-accent-1">POST</div>
+                        <div class="mini mt-2">Create new data or trigger a process.</div>
+                        <pre
+                            class="code mt-3"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>POST /students</pre>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold text-accent-1">PUT</div>
+                        <div class="mini mt-2">Replace a resource fully.</div>
+                        <pre
+                            class="code mt-3"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>PUT /students/42</pre>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold text-accent-1">DELETE</div>
+                        <div class="mini mt-2">Remove a resource.</div>
+                        <pre
+                            class="code mt-3"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>DELETE /students/42</pre>
+                    </div>
+                </div>
+                <div class="card reveal mt-5">
+                    <div class="font-semibold mb-2">Design tip</div>
+                    <div class="mini">PATCH is often useful for partial updates even though today’s training CRUD
+                        examples mostly use GET, POST, PUT, and DELETE to keep the fundamentals clear.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="6">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:360px;height:360px;top:-80px;right:-60px;background:var(--color-accent-2);opacity:.1">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-50px;left:-30px;background:var(--color-accent-1);opacity:.07">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-6">Status codes and JSON</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-3">Status code quick map</div>
+                        <ul class="mini tight">
+                            <li><strong>200 OK</strong> — successful read/update.</li>
+                            <li><strong>201 Created</strong> — resource created.</li>
+                            <li><strong>204 No Content</strong> — delete success, no body needed.</li>
+                            <li><strong>400/422</strong> — bad request or validation failure.</li>
+                            <li><strong>401/403</strong> — auth failure or forbidden action.</li>
+                            <li><strong>404/500</strong> — missing resource or server error.</li>
+                        </ul>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-3">JSON basics</div>
+                        <pre class="code"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>{
+    "id": 42,
+    "name": "Aisha Khan",
+    "email": "aisha@example.com",
+    "is_active": true,
+    "courses": ["python", "api-design"]
+}</pre>
+                        <div class="mini mt-3">JSON carries objects, arrays, strings, numbers, booleans, and null.
+                            FastAPI automatically parses request JSON into Python-friendly data structures.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="7">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:420px;height:420px;top:-90px;right:-90px;background:var(--color-accent-1);opacity:.12">
+                </div>
+                <div class="blob"
+                    style="width:280px;height:280px;bottom:-60px;left:-40px;background:var(--color-accent-2);opacity:.09">
+                </div>
+            </div><canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content text-center">
+                <div class="section-kicker reveal">Why FastAPI</div>
+                <h2 class="reveal font-display text-6xl mb-4">A modern Python API framework</h2>
+                <p class="reveal text-xl text-text-secondary max-w-4xl mx-auto">FastAPI is built around standard Python
+                    type hints, automatic OpenAPI documentation, validation through Pydantic, and async-friendly request
+                    handling.</p>
+                <div class="speaker reveal">Speaker note: This is the transition slide. Reinforce that FastAPI feels
+                    productive because editors, docs, validation, and runtime behavior all align around the same types.
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="8">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:320px;height:320px;top:-70px;left:-30px;background:var(--color-accent-3);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:260px;height:260px;bottom:-50px;right:-40px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-6">What is FastAPI?</h2>
+                <div class="two-col">
+                    <div class="card reveal">
+                        <ul class="tight text-lg text-text-secondary">
+                            <li>A high-performance Python web framework for building APIs.</li>
+                            <li>Built on Starlette for web features and Pydantic for data validation.</li>
+                            <li>Uses Python type annotations as the source of truth for request parsing and docs.</li>
+                            <li>Ships with interactive docs through Swagger UI and ReDoc.</li>
+                        </ul>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-3">Official workflow cues</div>
+                        <ul class="mini tight">
+                            <li>Examples are designed to be copied and run directly in local files.</li>
+                            <li>FastAPI encourages virtual environments and direct local execution.</li>
+                            <li>Development mode can be started with <span class="font-mono">fastapi dev</span>;
+                                production guidance recommends <span class="font-mono">fastapi run</span>.</li>
+                        </ul>
+                        <!-- <div class="speaker">Speaker note: Mention that we will still show Uvicorn explicitly because
+                            many teams manage app startup themselves in scripts, Dockerfiles, or process managers.</div> -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="9">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:300px;height:300px;top:-70px;right:-30px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-50px;left:-30px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">FastAPI vs Flask vs Django REST</h2>
+                <table class="comparison reveal card">
+                    <tr>
+                        <th>Area</th>
+                        <th>FastAPI</th>
+                        <th>Flask</th>
+                        <th>Django REST</th>
+                    </tr>
+                    <tr>
+                        <td>Developer experience</td>
+                        <td>Type hints drive validation and docs</td>
+                        <td>Flexible but more manual assembly</td>
+                        <td>Feature-rich, heavier framework stack</td>
+                    </tr>
+                    <tr>
+                        <td>Docs</td>
+                        <td>Automatic Swagger UI + ReDoc</td>
+                        <td>Usually add extensions manually</td>
+                        <td>Browsable API plus configurable schemas</td>
+                    </tr>
+                    <tr>
+                        <td>Async model</td>
+                        <td>First-class async path operations</td>
+                        <td>Traditionally sync-first, async story varies by setup</td>
+                        <td>Async support exists but full stack is broader and often heavier</td>
+                    </tr>
+                    <tr>
+                        <td>Best fit</td>
+                        <td>Modern APIs, microservices, typed backends</td>
+                        <td>Small custom services and flexible prototypes</td>
+                        <td>Large Django ecosystems and admin-heavy apps</td>
+                    </tr>
+                </table>
+                <!-- <div class="speaker reveal">Speaker note: Keep the comparison balanced; the message is not “FastAPI
+                    replaces everything,” but “FastAPI is excellent when API productivity, validation, and modern Python
+                    typing matter.”</div> -->
+            </div>
+        </div>
+
+        <div class="slide" data-slide="10">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:360px;height:360px;top:-90px;left:-60px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-50px;right:-30px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-6">Performance and async support</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Why async matters</div>
+                        <ul class="mini tight">
+                            <li>Async is valuable when a request spends time waiting on I/O, such as databases, HTTP
+                                services, or file operations.</li>
+                            <li>While one request awaits I/O, the server can keep serving other requests.</li>
+                            <li>This improves throughput for many backend workloads without adding threads everywhere.
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">FastAPI foundation</div>
+                        <ul class="mini tight">
+                            <li>FastAPI documents async/await as a core capability for path operation functions.</li>
+                            <li>It inherits high-performance ASGI behavior from Starlette.</li>
+                            <li>Teams can mix sync and async endpoints, then optimize hotspots as needed.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card reveal mt-5">
+                    <div class="font-semibold mb-3">Request profile example</div>
+                    <div class="grid grid-cols-[140px_1fr_60px] gap-3 items-center mini">
+                        <div>DB lookup</div>
+                        <div class="bar-track">
+                            <div class="bar-fill" data-width="88"></div>
+                        </div>
+                        <div>88%</div>
+                        <div>CPU work</div>
+                        <div class="bar-track">
+                            <div class="bar-fill" data-width="24"></div>
+                        </div>
+                        <div>24%</div>
+                        <div>Network call</div>
+                        <div class="bar-track">
+                            <div class="bar-fill" data-width="72"></div>
+                        </div>
+                        <div>72%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="11">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:330px;height:330px;top:-70px;right:-40px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-40px;left:-30px;background:var(--color-accent-3);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-6">Automatic documentation + type-driven validation</h2>
+                <div class="three-col">
+                    <div class="card reveal">
+                        <div class="text-2xl mb-2">📘</div>
+                        <div class="font-semibold mb-2">Swagger UI</div>
+                        <div class="mini">Interactive API testing directly in the browser at <span
+                                class="font-mono">/docs</span>.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="text-2xl mb-2">📕</div>
+                        <div class="font-semibold mb-2">ReDoc</div>
+                        <div class="mini">Clean reference-style documentation at <span class="font-mono">/redoc</span>.
+                        </div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="text-2xl mb-2">✅</div>
+                        <div class="font-semibold mb-2">Pydantic validation</div>
+                        <div class="mini">FastAPI validates strings, numbers, nested objects, emails, URLs, UUIDs, and
+                            more via Pydantic-backed models.</div>
+                    </div>
+                </div>
+                <div class="speaker reveal">Speaker note: Emphasize the multiplier effect—one model definition helps
+                    code completion, validation, docs, and error messages all at once.</div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="12">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:420px;height:420px;top:-90px;right:-90px;background:var(--color-accent-2);opacity:.12">
+                </div>
+                <div class="blob"
+                    style="width:280px;height:280px;bottom:-60px;left:-50px;background:var(--color-accent-1);opacity:.09">
+                </div>
+            </div><canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content text-center">
+                <div class="section-kicker reveal">Environment setup</div>
+                <h2 class="reveal font-display text-6xl mb-4">From zero to running server</h2>
+                <p class="reveal text-xl text-text-secondary max-w-4xl mx-auto">Set up Python, isolate dependencies,
+                    install FastAPI, and run a first application that exposes live docs.</p>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="13">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:320px;height:320px;top:-70px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-50px;right:-30px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Install Python and create a virtual environment</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-3">Checklist</div>
+                        <ul class="mini tight">
+                            <li>Use a current Python 3 release that your team supports.</li>
+                            <li>Create one virtual environment per project.</li>
+                            <li>Activate it before installing framework and tooling packages.</li>
+                            <li>Add dependency files to source control; never commit the entire venv folder.</li>
+                        </ul>
+                    </div>
+                    <pre class="terminal reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS / Linux
+source .venv/bin/activate
+python --version
+pip --version</pre>
+                </div>
+                <div class="speaker reveal">Speaker note: Many new developers skip environment isolation; this is the
+                    moment to explain reproducibility across laptops, CI, and deployment environments.</div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="14">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:300px;height:300px;top:-70px;right:-20px;background:var(--color-accent-3);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-60px;left:-30px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Install FastAPI and Uvicorn</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <pre class="terminal reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>pip install "fastapi[standard]"
+# or explicitly
+pip install fastapi uvicorn</pre>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-3">What gets installed?</div>
+                        <ul class="mini tight">
+                            <li>FastAPI framework package.</li>
+                            <li>ASGI server tooling for local development and runtime.</li>
+                            <li>Optional extras when using the standard install path.</li>
+                        </ul>
+                        <div class="note mt-4">For corporate projects, pin versions in <span
+                                class="font-mono">requirements.txt</span> or <span
+                                class="font-mono">pyproject.toml</span> to avoid environment drift.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="15">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:330px;height:330px;top:-70px;left:-30px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:260px;height:260px;bottom:-50px;right:-30px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Project structure and first app</h2>
+                <div class="two-col">
+                    <pre class="terminal reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>fastapi-training/
+├── app/
+│   ├── main.py
+│   ├── models.py
+│   ├── schemas.py
+│   ├── dependencies.py
+│   └── routers/
+├── tests/
+├── requirements.txt
+└── README.md</pre>
+                    <div class="card reveal">
+                        <pre class="code"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>from fastapi import FastAPI
+
+app = FastAPI(title="Student API")
+
+@app.get("/")
+def read_root():
+    return {"message": "FastAPI is running"}</pre>
+                        <pre
+                            class="terminal mt-4"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>uvicorn app.main:app --reload</pre>
+                        <div class="mini mt-3">Open <span class="font-mono">http://127.0.0.1:8000/docs</span> to inspect
+                            and test the route.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="16">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:360px;height:360px;top:-80px;right:-50px;background:var(--color-accent-2);opacity:.1">
+                </div>
+                <div class="blob"
+                    style="width:220px;height:220px;bottom:-40px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Hands-on 1: Run a simple FastAPI server</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Task</div>
+                        <div class="mini">Create <span class="font-mono">app/main.py</span>, define one route, and start
+                            the server with reload mode.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Expected result</div>
+                        <div class="mini">A JSON response from <span class="font-mono">/</span> and a visible Swagger UI
+                            page at <span class="font-mono">/docs</span>.</div>
+                    </div>
+                    <div class="card reveal quiz">
+                        <div class="font-semibold mb-2">Mini quiz</div>
+                        <div class="mini">What is the difference between the API route itself and the generated docs
+                            route?</div>
+                    </div>
+                </div>
+                <!-- <div class="speaker reveal">Speaker note: Ask one trainee to share their screen and deliberately mistype
+                    the import once so the group sees how startup errors surface in the terminal.</div> -->
+            </div>
+        </div>
+
+        <div class="slide" data-slide="17">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:430px;height:430px;top:-100px;left:-80px;background:var(--color-accent-1);opacity:.12">
+                </div>
+                <div class="blob"
+                    style="width:300px;height:300px;bottom:-60px;right:-40px;background:var(--color-accent-2);opacity:.09">
+                </div>
+            </div><canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content text-center">
+                <div class="section-kicker reveal">FastAPI basics</div>
+                <h2 class="reveal font-display text-6xl mb-4">Routes, parameters, bodies, and responses</h2>
+                <p class="reveal text-xl text-text-secondary max-w-4xl mx-auto">This is the part where trainees move
+                    from “server is running” to “I can model real application endpoints.”</p>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="18">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:320px;height:320px;top:-70px;right:-30px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-40px;left:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Creating routes</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <pre class="code reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>from fastapi import FastAPI
+app = FastAPI()
+
+@app.get("/students")
+def list_students():
+    return [{"id": 1, "name": "Aisha"}]
+
+@app.post("/students")
+def create_student():
+    return {"message": "created"}</pre>
+                    <div class="card reveal">
+                        <ul class="mini tight">
+                            <li>Decorators such as <span class="font-mono">@app.get</span> and <span
+                                    class="font-mono">@app.post</span> bind URL paths to Python functions.</li>
+                            <li>The function return value is serialized to JSON automatically.</li>
+                            <li>Use clear route names and keep handlers thin.</li>
+                        </ul>
+                        <!-- <div class="speaker">Speaker note: Introduce the phrase “path operation” because FastAPI docs
+                            use it heavily.</div> -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="19">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:330px;height:330px;top:-60px;left:-20px;background:var(--color-accent-3);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:260px;height:260px;bottom:-50px;right:-30px;background:var(--color-accent-1);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Path parameters and query parameters</h2>
+                <div class="two-col">
+                    <pre class="code reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>@app.get("/students/{student_id}")
+def get_student(student_id: int, active: bool = True):
+    return {
+        "student_id": student_id,
+        "active": active
+    }</pre>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-3">How it works</div>
+                        <ul class="mini tight">
+                            <li><span class="font-mono">student_id</span> is parsed from the URL path and validated as
+                                an integer.</li>
+                            <li><span class="font-mono">active</span> is a query parameter with a default value.</li>
+                            <li>Type hints drive parsing, validation, editor support, and docs.</li>
+                        </ul>
+                        <div class="note mt-4">Common mistake: forgetting that query parameters arrive as strings at the
+                            HTTP level even though FastAPI converts them to typed Python values for you.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="20">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:340px;height:340px;top:-70px;right:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-50px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Request body and response models</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <pre class="code reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>from pydantic import BaseModel
+
+class StudentIn(BaseModel):
+    name: str
+    age: int
+
+class StudentOut(StudentIn):
+    id: int
+
+@app.post("/students", response_model=StudentOut)
+def create_student(student: StudentIn):
+    return {"id": 101, **student.model_dump()}</pre>
+                    <div class="card reveal">
+                        <ul class="mini tight">
+                            <li>Body models provide structure and validation for incoming JSON.</li>
+                            <li><span class="font-mono">response_model</span> shapes outgoing data and helps prevent
+                                over-sharing internal fields.</li>
+                            <li>Swagger UI shows both request and response schema examples automatically.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="21">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:320px;height:320px;top:-70px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-50px;right:-30px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Student Management CRUD example</h2>
+                <pre class="code reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>students = []
+
+@app.get("/students")
+def list_students():
+    return students
+
+@app.post("/students", response_model=StudentOut)
+def add_student(student: StudentIn):
+    item = {"id": len(students) + 1, **student.model_dump()}
+    students.append(item)
+    return item
+
+@app.delete("/students/{student_id}", status_code=204)
+def delete_student(student_id: int):
+    global students
+    students = [s for s in students if s["id"] != student_id]</pre>
+                <div class="speaker reveal">Speaker note: This is intentionally in-memory and imperfect. Use it to teach
+                    behavior first, then later replace the list with database persistence.</div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="22">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:350px;height:350px;top:-80px;right:-40px;background:var(--color-accent-3);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-50px;left:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Hands-on 2: Build CRUD APIs</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-3">Coding tasks</div>
+                        <ul class="mini tight">
+                            <li>Create list, get-by-id, create, update, and delete routes.</li>
+                            <li>Add an in-memory list of students with fields id, name, email, and course.</li>
+                            <li>Return 404 for a missing student.</li>
+                        </ul>
+                    </div>
+                    <div class="card reveal quiz">
+                        <div class="font-semibold mb-3">Challenge extension</div>
+                        <ul class="mini tight">
+                            <li>Add a query parameter to filter only active students.</li>
+                            <li>Discuss whether PUT or PATCH is better for partial updates.</li>
+                            <li>Predict the correct status codes before running the endpoints.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="23">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:440px;height:440px;top:-110px;right:-90px;background:var(--color-accent-2);opacity:.12">
+                </div>
+                <div class="blob"
+                    style="width:300px;height:300px;bottom:-70px;left:-40px;background:var(--color-accent-1);opacity:.09">
+                </div>
+            </div><canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content text-center">
+                <div class="section-kicker reveal">Pydantic models</div>
+                <h2 class="reveal font-display text-6xl mb-4">Validation as part of the API contract</h2>
+                <p class="reveal text-xl text-text-secondary max-w-4xl mx-auto">In FastAPI, models are not just data
+                    containers; they are contracts that define, validate, and document your API.</p>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="24">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:330px;height:330px;top:-60px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-40px;right:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Data validation and request schemas</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <pre class="code reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>from pydantic import BaseModel, EmailStr, Field
+
+class StudentCreate(BaseModel):
+    name: str = Field(min_length=2, max_length=50)
+    email: EmailStr
+    age: int = Field(ge=16, le=80)
+    course: str</pre>
+                    <div class="card reveal">
+                        <ul class="mini tight">
+                            <li>Use type-specific fields such as <span class="font-mono">EmailStr</span> for richer
+                                validation.</li>
+                            <li><span class="font-mono">Field()</span> adds bounds, defaults, and metadata.</li>
+                            <li>Invalid requests produce structured validation errors automatically.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="25">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:330px;height:330px;top:-70px;right:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-40px;left:-20px;background:var(--color-accent-3);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Response schemas, optional fields, nested models</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Response schema</div>
+                        <div class="mini">Expose only what the client needs.</div>
+                        <pre class="code mt-3"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>class StudentOut(BaseModel):
+    id: int
+    name: str
+    email: EmailStr</pre>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Optional field</div>
+                        <div class="mini">Useful for partial data or future enrichment.</div>
+                        <pre
+                            class="code mt-3"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>phone: str | None = None</pre>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Nested model</div>
+                        <div class="mini">Great for domain objects.</div>
+                        <pre class="code mt-3"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>class Course(BaseModel):
+    code: str
+    title: str
+
+class Student(BaseModel):
+    name: str
+    course: Course</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="26">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:350px;height:350px;top:-70px;left:-30px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-40px;right:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Hands-on 3: Validate student and course objects</h2>
+                <div class="three-col">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Base task</div>
+                        <div class="mini">Create nested Student and Course models with length and numeric constraints.
+                        </div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Debug task</div>
+                        <div class="mini">Intentionally send an invalid email and underage value. Inspect the validation
+                            error payload.</div>
+                    </div>
+                    <div class="card reveal quiz">
+                        <div class="font-semibold mb-2">Quiz</div>
+                        <div class="mini">Why is <span class="font-mono">response_model</span> valuable even when your
+                            route already returns a dictionary?</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="27">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:430px;height:430px;top:-100px;left:-80px;background:var(--color-accent-1);opacity:.12">
+                </div>
+                <div class="blob"
+                    style="width:280px;height:280px;bottom:-60px;right:-40px;background:var(--color-accent-2);opacity:.09">
+                </div>
+            </div><canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content text-center">
+                <div class="section-kicker reveal">Async programming</div>
+                <h2 class="reveal font-display text-6xl mb-4">Concurrency without blocking the server</h2>
+                <p class="reveal text-xl text-text-secondary max-w-4xl mx-auto">Async endpoints are most useful when
+                    your application waits on external systems such as a database, storage, or another API.</p>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="28">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:320px;height:320px;top:-60px;right:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-40px;left:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">async vs sync and the await keyword</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <pre class="code reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>@app.get("/reports-sync")
+def get_report_sync():
+    data = slow_db_call()
+    return {"data": data}
+
+@app.get("/reports-async")
+async def get_report_async():
+    data = await slow_async_db_call()
+    return {"data": data}</pre>
+                    <div class="card reveal">
+                        <ul class="mini tight">
+                            <li><span class="font-mono">def</span> defines a synchronous endpoint.</li>
+                            <li><span class="font-mono">async def</span> defines an asynchronous endpoint.</li>
+                            <li><span class="font-mono">await</span> pauses the coroutine while other requests keep
+                                moving.</li>
+                            <li>Use async only when the called library or dependency supports it cleanly.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="29">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:330px;height:330px;top:-70px;left:-20px;background:var(--color-accent-3);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-40px;right:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">FastAPI async endpoint workflow</h2>
+                <div class="lifecycle reveal">
+                    <div class="card text-center">Request</div>
+                    <div class="arrow">→</div>
+                    <div class="card text-center">Route handler</div>
+                    <div class="arrow">→</div>
+                    <div class="card text-center">await DB / API</div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mt-5">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">When async helps</div>
+                        <ul class="mini tight">
+                            <li>High-latency I/O.</li>
+                            <li>Many concurrent users.</li>
+                            <li>Non-blocking integrations.</li>
+                        </ul>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">When not to force it</div>
+                        <ul class="mini tight">
+                            <li>CPU-heavy processing.</li>
+                            <li>Libraries that are sync-only.</li>
+                            <li>Codebases where complexity outweighs gain.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="30">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:340px;height:340px;top:-70px;right:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-40px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Hands-on 4: Convert sync APIs to async</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Task</div>
+                        <div class="mini">Convert one CRUD route to <span class="font-mono">async def</span> and
+                            simulate non-blocking work.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Observe</div>
+                        <div class="mini">Watch how the code changes, and discuss what actually became asynchronous.
+                        </div>
+                    </div>
+                    <div class="card reveal quiz">
+                        <div class="font-semibold mb-2">Quiz</div>
+                        <div class="mini">Does making every function async automatically make the app faster?</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="31">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:420px;height:420px;top:-90px;right:-90px;background:var(--color-accent-2);opacity:.12">
+                </div>
+                <div class="blob"
+                    style="width:280px;height:280px;bottom:-60px;left:-50px;background:var(--color-accent-1);opacity:.09">
+                </div>
+            </div><canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content text-center">
+                <div class="section-kicker reveal">Dependency injection</div>
+                <h2 class="reveal font-display text-6xl mb-4">Composable dependencies with Depends()</h2>
+                <p class="reveal text-xl text-text-secondary max-w-4xl mx-auto">FastAPI’s dependency system can validate
+                    request-driven inputs, manage auth, and provide reusable resources like database sessions.</p>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="32">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:320px;height:320px;top:-70px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-40px;right:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Reusable dependencies</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <pre class="code reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>from fastapi import Depends
+
+def common_params(limit: int = 10, skip: int = 0):
+    return {"limit": limit, "skip": skip}
+
+@app.get("/students")
+def list_students(params=Depends(common_params)):
+    return params</pre>
+                    <div class="card reveal">
+                        <ul class="mini tight">
+                            <li>Dependencies avoid repeating common setup and parameter logic.</li>
+                            <li>They can depend on other dependencies, forming a graph.</li>
+                            <li>FastAPI includes dependency parameters in validation and documentation automatically.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="33">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:330px;height:330px;top:-60px;right:-20px;background:var(--color-accent-3);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-40px;left:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Authentication and database dependencies</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <pre class="code reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.get("/employees")
+def list_employees(db = Depends(get_db)):
+    return db.query(Employee).all()</pre>
+                    <div class="card reveal">
+                        <ul class="mini tight">
+                            <li>A database session dependency centralizes setup and cleanup.</li>
+                            <li>The same pattern works for current-user resolution or tenant context.</li>
+                            <li>Dependencies keep route functions focused on business behavior.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="34">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:350px;height:350px;top:-70px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-50px;right:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Hands-on 5: Create a DB/session dependency</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Task</div>
+                        <div class="mini">Write <span class="font-mono">get_db()</span>, inject it into one route, and
+                            confirm sessions close correctly.</div>
+                    </div>
+                    <div class="card reveal trouble">
+                        <div class="font-semibold mb-2">Troubleshooting</div>
+                        <div class="mini">If sessions pile up or the app holds file locks in SQLite, check whether
+                            cleanup in the <span class="font-mono">finally</span> block is missing.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="35">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:430px;height:430px;top:-110px;left:-80px;background:var(--color-accent-1);opacity:.12">
+                </div>
+                <div class="blob"
+                    style="width:290px;height:290px;bottom:-60px;right:-40px;background:var(--color-accent-2);opacity:.09">
+                </div>
+            </div><canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content text-center">
+                <div class="section-kicker reveal">Database integration</div>
+                <h2 class="reveal font-display text-6xl mb-4">From in-memory lists to persistence</h2>
+                <p class="reveal text-xl text-text-secondary max-w-4xl mx-auto">Persistent storage is where APIs become
+                    useful to real applications. FastAPI works well with SQLAlchemy and multiple relational databases.
+                </p>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="36">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:330px;height:330px;top:-70px;right:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-40px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">SQLAlchemy integration and ORM basics</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <pre class="code reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button># main.py
+
+from fastapi import FastAPI, Depends
+from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
+
+# ---------------- DATABASE ----------------
+
+DATABASE_URL = "sqlite:///./training.db"
+
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False}
+)
+
+SessionLocal = sessionmaker(bind=engine)
+
+Base = declarative_base()
+
+# ---------------- MODEL ----------------
+
+class Employee(Base):
+    __tablename__ = "employees"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    department = Column(String, nullable=False)
+
+# Create tables
+Base.metadata.create_all(bind=engine)</pre>
+                    <div class="card reveal">
+                        <ul class="mini tight">
+                            <li>SQLAlchemy maps Python classes to database tables.</li>
+                            <li>Common starter options: SQLite for training, PostgreSQL or MySQL for production-grade
+                                systems.</li>
+                            <li>ORM models are usually separate from API schemas.</li>
+                            <li>pip install fastapi uvicorn sqlalchemy psycopg2-binary</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="37">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:320px;height:320px;top:-70px;left:-20px;background:var(--color-accent-3);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-40px;right:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Connect and perform CRUD operations</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <pre class="terminal reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button># ---------------- DB DEPENDENCY ----------------
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()</pre>
+                    <pre class="code reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button># ---------------- FASTAPI ----------------
+
+app = FastAPI()
+
+# ---------------- ENDPOINTS ----------------
+
+@app.get("/")
+def home():
+    return {"message": "Employee API Running"}
+
+# Create Employee
+@app.post("/employees")
+def create_employee(
+    name: str,
+    department: str,
+    db: Session = Depends(get_db)
+):
+    employee = Employee(
+        name=name,
+        department=department
+    )
+
+    db.add(employee)
+    db.commit()
+    db.refresh(employee)
+
+    return employee
+
+# Get All Employees
+@app.get("/employees")
+def get_employees(db: Session = Depends(get_db)):
+    employees = db.query(Employee).all()
+    return employees</pre>
+                </div>
+                <!-- <div class="speaker reveal">Speaker note: Explain commit, refresh, and query in concrete language. Many
+                    juniors understand CRUD conceptually but not the life cycle of ORM objects.</div> -->
+            </div>
+        </div>
+
+        <div class="slide" data-slide="38">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:350px;height:350px;top:-70px;right:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-40px;left:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Hands-on 6: Build persistent CRUD APIs</h2>
+                <div class="three-col">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Goal</div>
+                        <div class="mini">Replace the in-memory student list with a real database table.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Stretch</div>
+                        <div class="mini">Add unique email handling and return a clear error if a duplicate is inserted.
+                        </div>
+                    </div>
+                    <div class="card reveal trouble">
+                        <div class="font-semibold mb-2">Watch for</div>
+                        <div class="mini">SQLite path issues, missing table creation, and forgetting to commit
+                            transactions.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="39">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:430px;height:430px;top:-100px;right:-80px;background:var(--color-accent-2);opacity:.12">
+                </div>
+                <div class="blob"
+                    style="width:280px;height:280px;bottom:-60px;left:-40px;background:var(--color-accent-1);opacity:.09">
+                </div>
+            </div><canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content text-center">
+                <div class="section-kicker reveal">Authentication & security</div>
+                <h2 class="reveal font-display text-6xl mb-4">Protect routes and identities</h2>
+                <p class="reveal text-xl text-text-secondary max-w-4xl mx-auto">Security is not an optional add-on.
+                    FastAPI includes reusable security components and OpenAPI integration for OAuth2-style flows.</p>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="40">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:330px;height:330px;top:-70px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-40px;right:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">OAuth2, JWT, password hashing, protected routes</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <pre class="code reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>pip install fastapi uvicorn bcrypt python-jose python-multipart
+import bcrypt
+
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
+from jose import jwt
+
+app = FastAPI()
+
+SECRET_KEY = "secret"
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+
+# -----------------------------
+# Password Hashing
+# -----------------------------
+
+# Hash password once
+hashed_password = bcrypt.hashpw(
+    b"1234",
+    bcrypt.gensalt()
+)
+
+fake_user = {
+    "username": "admin",
+    "hashed_password": hashed_password
+}
+
+# -----------------------------
+# Login
+# -----------------------------
+
+@app.post("/login")
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+
+    # Check username
+    if form_data.username != fake_user["username"]:
+        raise HTTPException(status_code=401)
+
+    # Check password
+    valid = bcrypt.checkpw(
+        form_data.password.encode(),
+        fake_user["hashed_password"]
+    )
+
+    if not valid:
+        raise HTTPException(status_code=401)
+
+    # Create JWT token
+    token = jwt.encode(
+        {"sub": fake_user["username"]},
+        SECRET_KEY,
+        algorithm="HS256"
+    )
+
+    return {"access_token": token}
+
+# -----------------------------
+# Protected Route
+# -----------------------------
+
+@app.get("/profile")
+def profile(token: str = Depends(oauth2_scheme)):
+
+    data = jwt.decode(
+        token,
+        SECRET_KEY,
+        algorithms=["HS256"]
+    )
+
+    return {
+        "message": "Protected route",
+        "user": data["sub"]
+    }</pre>
+                    <div class="card reveal">
+                        <ul class="mini tight">
+                            <li>FastAPI’s official security tutorial demonstrates OAuth2 password flow with JWT tokens
+                                and hashed passwords.</li>
+                            <li>Use a secret key, expiry time, and secure password hashing.</li>
+                            <li>Role-based access can be layered on top of the current-user dependency.</li>
+                        </ul>
+                        <div class="note mt-4">Never store plain passwords. Hash them before persistence, and validate
+                            tokens on every protected request.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="41">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:320px;height:320px;top:-60px;right:-20px;background:var(--color-accent-3);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-40px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Hands-on 7: Implement login and token authentication</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Build</div>
+                        <div class="mini">Create <span class="font-mono">/token</span>, generate a JWT, and protect one
+                            employee route.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Verify</div>
+                        <div class="mini">Use Swagger UI Authorize button or Postman to send the bearer token.</div>
+                    </div>
+                    <div class="card reveal quiz">
+                        <div class="font-semibold mb-2">Quiz</div>
+                        <div class="mini">What should happen if the token is expired, malformed, or signed with the
+                            wrong secret?</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="42">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:420px;height:420px;top:-90px;left:-70px;background:var(--color-accent-1);opacity:.12">
+                </div>
+                <div class="blob"
+                    style="width:280px;height:280px;bottom:-50px;right:-30px;background:var(--color-accent-2);opacity:.09">
+                </div>
+            </div><canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content text-center">
+                <div class="section-kicker reveal">Middleware & exceptions</div>
+                <h2 class="reveal font-display text-6xl mb-4">Cross-cutting concerns and resilient error handling</h2>
+                <p class="reveal text-xl text-text-secondary max-w-4xl mx-auto">Production APIs need observability,
+                    browser compatibility, and consistent error responses.</p>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="43">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:330px;height:330px;top:-70px;right:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-40px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Middleware essentials</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Logging middleware</div>
+                        <div class="mini">Capture request path, method, latency, and correlation IDs for diagnostics.
+                        </div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">CORS middleware</div>
+                        <div class="mini">Allow browser clients from approved origins to call your API safely.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Custom middleware</div>
+                        <div class="mini">Apply logic before and after request handling, such as headers or audit tags.
+                        </div>
+                    </div>
+                </div>
+                <pre class="code reveal mt-5"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://frontend.example.com"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)</pre>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="44">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:340px;height:340px;top:-70px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-40px;right:-20px;background:var(--color-accent-3);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">HTTPException and global exception handlers</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <pre class="code reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>from fastapi import HTTPException
+
+@app.get("/students/{student_id}")
+def get_student(student_id: int):
+    student = find_student(student_id)
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+        return student</pre>
+                    <div class="card reveal">
+                        <ul class="mini tight">
+                            <li>Use <span class="font-mono">HTTPException</span> for predictable API-level errors.</li>
+                            <li>Add custom exception handlers for consistent JSON error envelopes.</li>
+                            <li>Validation errors already have a standard structure; teach trainees to read them rather
+                                than fear them.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="45">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:430px;height:430px;top:-100px;right:-80px;background:var(--color-accent-2);opacity:.12">
+                </div>
+                <div class="blob"
+                    style="width:280px;height:280px;bottom:-60px;left:-40px;background:var(--color-accent-1);opacity:.09">
+                </div>
+            </div><canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content text-center">
+                <div class="section-kicker reveal">Files, background tasks, docs</div>
+                <h2 class="reveal font-display text-6xl mb-4">Useful operational features</h2>
+                <p class="reveal text-xl text-text-secondary max-w-4xl mx-auto">FastAPI handles more than JSON. It can
+                    receive files, process forms, kick off background work, and expose docs for testing.</p>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="46">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:330px;height:330px;top:-70px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-40px;right:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">File uploads, forms, background tasks, API docs</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <pre class="code reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>from fastapi import FastAPI, File, UploadFile, Form, BackgroundTasks
+
+app = FastAPI()
+
+# Background task function
+def save_log(username: str):
+    with open("log.txt", "a") as f:
+        f.write(f"{username} uploaded a file\n")
+
+# Upload route
+@app.post("/upload")
+async def upload_file(
+    background_tasks: BackgroundTasks,
+    username: str = Form(...),
+    file: UploadFile = File(...)
+):
+
+    # Run task in background
+    background_tasks.add_task(save_log, username)
+
+    return {
+        "username": username,
+        "filename": file.filename
+    }</pre>
+                    <div class="card reveal">
+                        <ul class="mini tight">
+                            <li>Use file and form helpers for browser-style submissions.</li>
+                            <li>BackgroundTasks is useful for quick follow-up work such as emails or audit logging.</li>
+                            <li>Swagger UI makes it easy to test uploads and token-protected routes without writing
+                                client code first.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="47">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:350px;height:350px;top:-70px;right:-20px;background:var(--color-accent-3);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-40px;left:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Hands-on 8: Upload + docs testing</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Task A</div>
+                        <div class="mini">Build a file upload endpoint for profile images or course materials.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Task B</div>
+                        <div class="mini">Trigger and inspect the endpoint from Swagger UI and Postman.</div>
+                    </div>
+                    <div class="card reveal trouble">
+                        <div class="font-semibold mb-2">Common issue</div>
+                        <div class="mini">Using JSON body instead of multipart form data for file upload requests.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="48">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:430px;height:430px;top:-100px;left:-80px;background:var(--color-accent-1);opacity:.12">
+                </div>
+                <div class="blob"
+                    style="width:280px;height:280px;bottom:-60px;right:-40px;background:var(--color-accent-2);opacity:.09">
+                </div>
+            </div><canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content text-center">
+                <div class="section-kicker reveal">Testing & deployment</div>
+                <h2 class="reveal font-display text-6xl mb-4">Confidence before release</h2>
+                <p class="reveal text-xl text-text-secondary max-w-4xl mx-auto">Testing proves behavior; deployment
+                    discipline makes that behavior reproducible across environments.</p>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="49">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:330px;height:330px;top:-60px;right:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-40px;left:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Testing FastAPI with pytest and TestClient</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <pre class="code reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>pip install pytest httpx
+from fastapi import FastAPI, Header, HTTPException
+
+app = FastAPI()
+
+items = []
+
+# Health route
+@app.get("/")
+def health():
+    return {"status": "ok"}
+
+# Create item
+@app.post("/items")
+def create_item(name: str):
+
+    if len(name) < 3:
+        raise HTTPException(status_code=400)
+
+    items.append(name)
+
+    return {"item": name}
+
+# Protected route
+@app.get("/admin")
+def admin(x_token: str = Header()):
+
+    if x_token != "secret":
+        raise HTTPException(status_code=401)
+
+    return {"message": "Welcome admin"}
+    
+from fastapi.testclient import TestClient
+
+from main import app
+
+client = TestClient(app)
+
+# -----------------------------
+# Happy Path Test
+# -----------------------------
+
+def test_health():
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ok"
+    }
+
+# -----------------------------
+# CRUD Test
+# -----------------------------
+
+def test_create_item():
+    response = client.post(
+        "/items",
+        params={"name": "Laptop"}
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "item": "Laptop"
+    }
+
+# -----------------------------
+# Validation Test
+# -----------------------------
+
+def test_create_item_fail():
+
+    response = client.post(
+        "/items",
+        params={"name": "ab"}
+    )
+
+    assert response.status_code == 400
+
+# -----------------------------
+# Authorization Test
+# -----------------------------
+
+def test_admin_auth():
+
+    response = client.get(
+        "/admin",
+        headers={"x-token": "secret"}
+    )
+
+    assert response.status_code == 200
+
+# -----------------------------
+# Unauthorized Test
+# -----------------------------
+
+def test_admin_fail():
+
+    response = client.get("/admin")
+
+    assert response.status_code == 422</pre>
+                    <div class="card reveal">
+                        <ul class="mini tight">
+                            <li>Start with a few happy-path tests for health and CRUD endpoints.</li>
+                            <li>Add failure cases, authorization checks, and validation assertions.</li>
+                            <li>FastAPI also documents async test patterns when asynchronous test functions are needed.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="50">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:330px;height:330px;top:-70px;left:-20px;background:var(--color-accent-3);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-40px;right:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Deployment overview</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Run servers</div>
+                        <div class="mini">Uvicorn for development; production setups often use Uvicorn workers behind
+                            Gunicorn, containers, or a process manager.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Configuration</div>
+                        <div class="mini">Move secrets and environment-specific values to environment variables.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Targets</div>
+                        <div class="mini">Docker, Linux VMs, or cloud environments such as AWS-based infrastructure.
+                        </div>
+                    </div>
+                </div>
+                <pre class="terminal reveal mt-5"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Dockerfile entrypoint example
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]</pre>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="51">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:350px;height:350px;top:-70px;right:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-40px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Best practices for production-grade FastAPI</h2>
+                <div class="agenda-grid">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Folder structure</div>
+                        <div class="mini">Split routers, schemas, services, models, and dependencies.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Environment management</div>
+                        <div class="mini">Use settings classes, env files, and secrets management.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Logging</div>
+                        <div class="mini">Log with context, not just print statements.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Security</div>
+                        <div class="mini">Validate input, hash passwords, restrict CORS, rotate secrets.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Scalability</div>
+                        <div class="mini">Keep handlers thin, offload long jobs, use async where it matters.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Clean architecture</div>
+                        <div class="mini">Separate transport, business logic, and persistence layers.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="52">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:430px;height:430px;top:-110px;right:-80px;background:var(--color-accent-2);opacity:.12">
+                </div>
+                <div class="blob"
+                    style="width:280px;height:280px;bottom:-60px;left:-40px;background:var(--color-accent-1);opacity:.09">
+                </div>
+            </div><canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content text-center">
+                <div class="section-kicker reveal">Mini project</div>
+                <h2 class="reveal font-display text-6xl mb-4">Employee Management API</h2>
+                <p class="reveal text-xl text-text-secondary max-w-4xl mx-auto">The final project combines routing,
+                    validation, auth, persistence, tests, and practical architecture into one coherent API.</p>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="53">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:330px;height:330px;top:-70px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:240px;height:240px;bottom:-40px;right:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Project architecture and folder structure</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-3">Architecture flow</div>
+                        <div class="lifecycle">
+                            <div class="card text-center">Client</div>
+                            <div class="arrow">→</div>
+                            <div class="card text-center">Router</div>
+                            <div class="arrow">→</div>
+                            <div class="card text-center">Service</div>
+                        </div>
+                        <div class="lifecycle mt-3">
+                            <div class="card text-center">Auth</div>
+                            <div class="arrow">→</div>
+                            <div class="card text-center">Repository</div>
+                            <div class="arrow">→</div>
+                            <div class="card text-center">Database</div>
+                        </div>
+                    </div>
+                    <pre class="terminal reveal"><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>app/
+├── main.py
+├── core/security.py
+├── db/session.py
+├── models/employee.py
+├── schemas/employee.py
+├── services/employee_service.py
+├── routers/employees.py
+└── tests/test_employees.py</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="54">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:340px;height:340px;top:-70px;right:-20px;background:var(--color-accent-3);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-40px;left:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">End-to-end implementation walkthrough</h2>
+                <div class="timeline">
+                    <div class="timeline-item reveal">
+                        <div class="font-semibold">1. Define ORM and Pydantic schemas</div>
+                        <div class="mini">Create employee fields, validation rules, and response contracts.</div>
+                    </div>
+                    <div class="timeline-item reveal">
+                        <div class="font-semibold">2. Add DB session + CRUD service layer</div>
+                        <div class="mini">Encapsulate creation, lookup, update, and delete operations.</div>
+                    </div>
+                    <div class="timeline-item reveal">
+                        <div class="font-semibold">3. Wire protected routers</div>
+                        <div class="mini">Inject current user, DB session, and service functions.</div>
+                    </div>
+                    <div class="timeline-item reveal">
+                        <div class="font-semibold">4. Test the API</div>
+                        <div class="mini">Use TestClient for auth flow and CRUD coverage.</div>
+                    </div>
+                    <div class="timeline-item reveal">
+                        <div class="font-semibold">5. Containerize and configure env vars</div>
+                        <div class="mini">Prepare a deployment-ready package.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="55">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:350px;height:350px;top:-70px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-40px;right:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Interactive activities for trainees</h2>
+                <div class="agenda-grid">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Coding exercise</div>
+                        <div class="mini">Design a Courses API with pagination and validation.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Debugging challenge</div>
+                        <div class="mini">Fix a 422 error caused by wrong JSON payload shape.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Quiz question</div>
+                        <div class="mini">Explain the difference between 401 and 403 in a protected route.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">API design task</div>
+                        <div class="mini">Propose endpoints for attendance tracking or leave requests.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Error-fixing exercise</div>
+                        <div class="mini">Repair a broken dependency injection setup.</div>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-2">Stretch task</div>
+                        <div class="mini">Add search and sorting query params.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="56">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:430px;height:430px;top:-100px;right:-80px;background:var(--color-accent-2);opacity:.12">
+                </div>
+                <div class="blob"
+                    style="width:280px;height:280px;bottom:-60px;left:-40px;background:var(--color-accent-1);opacity:.09">
+                </div>
+            </div><canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content text-center">
+                <div class="section-kicker reveal">Troubleshooting</div>
+                <h2 class="reveal font-display text-6xl mb-4">Common mistakes and how to fix them</h2>
+                <p class="reveal text-xl text-text-secondary max-w-4xl mx-auto">Debugging skill matters as much as
+                    coding speed. Show trainees how to read errors, not just avoid them.</p>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="57">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:330px;height:330px;top:-60px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-40px;right:-20px;background:var(--color-accent-3);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Troubleshooting map</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="card reveal trouble">
+                        <div class="font-semibold mb-2">422 Unprocessable Entity</div>
+                        <div class="mini">Check body schema, missing fields, wrong types, and nested JSON shape.</div>
+                    </div>
+                    <div class="card reveal trouble">
+                        <div class="font-semibold mb-2">Import/module startup errors</div>
+                        <div class="mini">Verify the app path in Uvicorn command and fix circular imports.</div>
+                    </div>
+                    <div class="card reveal trouble">
+                        <div class="font-semibold mb-2">CORS blocked in browser</div>
+                        <div class="mini">Confirm origin configuration and that frontend URL matches exactly.</div>
+                    </div>
+                    <div class="card reveal ok">
+                        <div class="font-semibold mb-2">Auth fails</div>
+                        <div class="mini">Inspect token expiry, password hashing, bearer header, and secret key
+                            mismatch.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="58">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:420px;height:420px;top:-100px;left:-80px;background:var(--color-accent-1);opacity:.12">
+                </div>
+                <div class="blob"
+                    style="width:280px;height:280px;bottom:-60px;right:-40px;background:var(--color-accent-2);opacity:.09">
+                </div>
+            </div><canvas class="particle-canvas-ambient" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content text-center">
+                <div class="section-kicker reveal">Wrap-up</div>
+                <h2 class="reveal font-display text-6xl mb-4">Key takeaways and learning roadmap</h2>
+                <p class="reveal text-xl text-text-secondary max-w-4xl mx-auto">The goal is not memorizing decorators;
+                    it is learning how to design, validate, secure, test, and ship APIs with confidence.</p>
+            </div>
+        </div>
+
+        <div class="slide" data-slide="59">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:340px;height:340px;top:-70px;right:-20px;background:var(--color-accent-2);opacity:.08">
+                </div>
+                <div class="blob"
+                    style="width:250px;height:250px;bottom:-40px;left:-20px;background:var(--color-accent-1);opacity:.08">
+                </div>
+            </div>
+            <div class="content">
+                <h2 class="reveal font-display text-5xl mb-5">Resources, next steps, and Q&amp;A</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="card reveal">
+                        <div class="font-semibold mb-3">Next topics to explore</div>
+                        <ul class="mini tight">
+                            <li>Async database drivers and SQLModel.</li>
+                            <li>Advanced dependency patterns and settings management.</li>
+                            <li>Background workers, caching, and observability.</li>
+                            <li>CI pipelines, Docker Compose, and cloud deployment automation.</li>
+                        </ul>
+                    </div>
+                    <div class="card reveal">
+                        <div class="font-semibold mb-3">Useful references</div>
+                        <ul class="mini tight">
+                            <li>FastAPI Tutorial and Features pages.</li>
+                            <li>OAuth2 with JWT official tutorial.</li>
+                            <li>Swagger UI and ReDoc generated by your own application.</li>
+                            <li>pytest + TestClient examples in the project repo.</li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- <div class="speaker reveal">Speaker note: Use the Q&amp;A time to revisit trainee code, not just answer
+                    abstract questions. Ask them to show what worked and what failed.</div> -->
+            </div>
+        </div>
+
+        <div class="slide" data-slide="60">
+            <div class="gradient-mesh">
+                <div class="blob"
+                    style="width:480px;height:480px;top:-90px;right:-70px;background:var(--color-accent-1);opacity:.15">
+                </div>
+                <div class="blob"
+                    style="width:320px;height:320px;bottom:-70px;left:-50px;background:var(--color-accent-2);opacity:.12">
+                </div>
+                <div class="blob"
+                    style="width:220px;height:220px;top:40%;left:18%;background:var(--color-accent-3);opacity:.1"></div>
+            </div><canvas class="particle-canvas" style="position:absolute;inset:0;z-index:1"></canvas>
+            <div class="content">
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="card reveal">
+                        <div class="section-kicker mb-2">Trainer cheat sheet</div>
+                        <h2 class="font-display text-4xl mb-3">Delivery plan</h2>
+                        <ul class="mini tight">
+                            <li>Suggested timing: APIs 8 min, FastAPI why/setup 10 min, core basics 12 min, Pydantic +
+                                async 8 min, dependencies + DB 8 min, security 7 min, middleware/files/testing/deploy 8
+                                min, mini project + wrap-up 10 min.</li>
+                            <li>Live demo flow: create app, add CRUD, add validation, wire SQLite, protect route, run
+                                tests.</li>
+                            <li>Backup exercises: add search endpoint, pagination, PATCH route, duplicate-email
+                                handling, custom exception envelope.</li>
+                        </ul>
+                    </div>
+                    <div class="card reveal">
+                        <div class="section-kicker mb-2">Trainer notes</div>
+                        <h2 class="font-display text-4xl mb-3">Facilitation tips</h2>
+                        <ul class="mini tight">
+                            <li>Pause after each coding segment for two questions: “What changed?” and “What could
+                                break?”</li>
+                            <li>Use Swagger UI for instant feedback, then move to Postman and pytest for realism.</li>
+                            <li>Keep one prepared repo branch per major checkpoint in case of projector or typing
+                                issues.</li>
+                            <li>Close by asking each trainee to propose one production improvement to the mini project.
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="reveal text-center mt-6 text-xl text-text-secondary tracking-[0.25em] uppercase">Thank you •
+                    Final Q&amp;A</div>
+            </div>
+        </div>
+
+    </div>
+    <div id="navigator" class="navigator-modal">
+        <div class="navigator-content">
+            <div class="navigator-header">
+                <h2 class="navigator-title">Slide Navigator</h2>
+                <button class="close-nav" onclick="toggleNavigator()" aria-label="Close navigator">&times;</button>
+            </div>
+            <div class="slide-list" id="slide-list"></div>
+        </div>
+    </div>
+    <div class="nav-controls">
+        <button class="nav-btn" aria-label="Previous slide" onclick="changeSlide(-1)">&#8249;</button>
+        <span class="slide-counter" id="counter" onclick="toggleNavigator()" title="Click to open Slide Navigator">1 /
+            N</span>
+        <button class="nav-btn" aria-label="Next slide" onclick="changeSlide(1)">&#8250;</button>
+        <div class="slide-dots" id="dots" style="display: none;"></div>
+    </div>
+    <script>
+        let navigatorBuilt = false;
+        function toggleNavigator() {
+            const modal = document.getElementById('navigator');
+            if (!navigatorBuilt) { buildNavigator(); navigatorBuilt = true; }
+
+            if (modal.classList.contains('active')) {
+                modal.classList.remove('active');
+            } else {
+                document.querySelectorAll('.slide-item').forEach((item, idx) => {
+                    if (idx + 1 === current) item.classList.add('current');
+                    else item.classList.remove('current');
+                });
+                modal.classList.add('active');
+            }
+        }
+
+        function buildNavigator() {
+            const list = document.getElementById('slide-list');
+            document.querySelectorAll('.slide').forEach((slide, idx) => {
+                const num = idx + 1;
+                let title = "Slide " + num;
+                const h1 = slide.querySelector('h1');
+                const h2 = slide.querySelector('h2');
+                if (h1) title = h1.textContent;
+                else if (h2) title = h2.textContent;
+
+                const item = document.createElement('div');
+                item.className = 'slide-item';
+                item.onclick = () => { goToSlide(num); toggleNavigator(); };
+                item.innerHTML = `<div class="slide-item-num">Slide ${num}</div><div class="slide-item-title">${title}</div>`;
+                list.appendChild(item);
+            });
+        }
+
+        document.getElementById('navigator').addEventListener('click', function (e) {
+            if (e.target === this) toggleNavigator();
+        });
+
+        let current = 1;
+        const total = document.querySelectorAll('.slide').length;
+        const dotsContainer = document.getElementById('dots');
+        const counter = document.getElementById('counter');
+        for (let i = 1; i <= total; i++) { const dot = document.createElement('div'); dot.className = 'dot' + (i === 1 ? ' active' : ''); dot.onclick = () => goToSlide(i); dotsContainer.appendChild(dot); }
+        function goToSlide(n) { const prev = document.querySelector('.slide.active'); const next = document.querySelector(`.slide[data-slide="${n}"]`); if (prev) prev.classList.remove('active'); if (next) { next.classList.add('active'); animateSlide(next); } current = n; updateNav(); }
+        function changeSlide(dir) { let next = current + dir; if (next < 1) next = total; if (next > total) next = 1; goToSlide(next); }
+        function updateNav() { document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i + 1 === current)); counter.textContent = current + ' / ' + total; }
+        document.addEventListener('keydown', (e) => {
+            const modal = document.getElementById('navigator');
+            if (modal && modal.classList.contains('active')) {
+                if (e.key === 'Escape') toggleNavigator();
+                return;
+            }
+            if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); changeSlide(-1); }
+        });
+        let touchStartX = 0; document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }); document.addEventListener('touchend', (e) => { const diff = touchStartX - e.changedTouches[0].clientX; if (Math.abs(diff) > 50) changeSlide(diff > 0 ? 1 : -1); });
+        function animateSlide(slide) {
+            slide.querySelectorAll('.reveal').forEach((el, i) => { el.style.transition = 'none'; el.style.opacity = '0'; el.style.transform = 'translateY(20px)'; el.offsetHeight; const delay = i * 0.08; el.style.transition = `opacity 0.35s ease ${delay}s, transform 0.35s ease ${delay}s`; el.style.opacity = '1'; el.style.transform = 'translateY(0px)'; });
+            animateSlideEffects(slide);
+        }
+        function animateSlideEffects(slide) {
+            slide.querySelectorAll('.bar-fill:not(.fill-init)').forEach((bar, i) => { bar.classList.add('fill-init'); bar.style.width = '0%'; bar.style.transition = `width 0.6s ease ${i * 0.08}s`; bar.offsetHeight; bar.style.width = bar.dataset.width + '%'; });
+        }
+        document.addEventListener('mousemove', (e) => { const spotlight = document.querySelector('.mouse-spotlight'); if (spotlight) { const rgb = getComputedStyle(document.documentElement).getPropertyValue('--glow-color-rgb').trim() || '6,182,212'; spotlight.style.background = `radial-gradient(560px circle at ${e.clientX}px ${e.clientY}px, rgba(${rgb}, 0.06), transparent 40%)`; } });
+        (function () { let mouseX = window.innerWidth / 2, mouseY = window.innerHeight / 2; const cx = window.innerWidth / 2, cy = window.innerHeight / 2; document.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; }); (function tick() { const ox = (mouseX - cx) / cx, oy = (mouseY - cy) / cy; document.querySelectorAll('.deco-shape').forEach(shape => { const speed = parseFloat(shape.dataset.speed) || 0.03; shape.style.transform = `translate(${ox * speed * 100}px, ${oy * speed * 100}px)`; }); requestAnimationFrame(tick); })(); })();
+        window.initParticles = function (canvas, options) { if (!canvas) return; const ctx = canvas.getContext('2d'); canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; const interactive = options.interactive !== false; const count = options.count || (interactive ? 55 : 18); let mx = -1000, my = -1000; const rgb = getComputedStyle(document.documentElement).getPropertyValue('--glow-color-rgb').trim() || '6,182,212'; const [r, g, b] = rgb.split(',').map(Number); const particles = Array.from({ length: count }, () => ({ x: Math.random() * canvas.width, y: Math.random() * canvas.height, vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3, size: Math.random() * 2.5 + 0.8, alpha: Math.random() * 0.35 + 0.1 })); if (interactive) { canvas.addEventListener('mousemove', (e) => { const rect = canvas.getBoundingClientRect(); mx = e.clientX - rect.left; my = e.clientY - rect.top; }); canvas.addEventListener('mouseleave', () => { mx = -1000; my = -1000; }); } (function animate() { ctx.clearRect(0, 0, canvas.width, canvas.height); particles.forEach(p => { if (interactive) { const dx = p.x - mx, dy = p.y - my, dist = Math.sqrt(dx * dx + dy * dy) || 1; if (dist < 120) { const force = (120 - dist) / 120 * 2; p.vx += (dx / dist) * force * 0.1; p.vy += (dy / dist) * force * 0.1; } } p.vx *= 0.98; p.vy *= 0.98; p.x += p.vx; p.y += p.vy; if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0; if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fillStyle = `rgba(${r},${g},${b},${p.alpha})`; ctx.fill(); }); requestAnimationFrame(animate); })(); };
+        document.querySelectorAll('.particle-canvas').forEach(c => window.initParticles(c, { interactive: true, count: 55 }));
+        document.querySelectorAll('.particle-canvas-ambient').forEach(c => window.initParticles(c, { interactive: false, count: 18 }));
+        try { animateSlide(document.querySelector('.slide.active')); updateNav(); } catch (e) { console.warn('Initial animation error:', e); }
+
+        (function setupSelectionSearch() {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'selection-tooltip';
+            tooltip.innerHTML = `<svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><path d="M19 3l-1.5 4.5L13 9l4.5 1.5L19 15l1.5-4.5L25 9l-4.5-1.5zM8 5L5.5 12 0 14.5 5.5 17 8 24l2.5-7L16 14.5 10.5 12z"/></svg> Ask AI`;
+            document.body.appendChild(tooltip);
+            let selectedText = '';
+
+            document.addEventListener('mouseup', (e) => {
+                setTimeout(() => {
+                    const selection = window.getSelection();
+                    selectedText = selection.toString().trim();
+                    if (selectedText.length > 0 && !tooltip.contains(e.target)) {
+                        const range = selection.getRangeAt(0);
+                        const rect = range.getBoundingClientRect();
+                        tooltip.style.display = 'flex';
+                        const tWidth = tooltip.offsetWidth;
+                        const tHeight = tooltip.offsetHeight;
+                        let top = rect.top + window.scrollY - tHeight - 10;
+                        let left = rect.left + window.scrollX + (rect.width / 2) - (tWidth / 2);
+                        if (top < 0) top = rect.bottom + window.scrollY + 10;
+                        if (left < 0) left = 10;
+                        tooltip.style.top = top + 'px';
+                        tooltip.style.left = left + 'px';
+                    } else if (!tooltip.contains(e.target)) {
+                        tooltip.style.display = 'none';
+                    }
+                }, 10);
+            });
+
+            document.addEventListener('mousedown', (e) => {
+                if (!tooltip.contains(e.target)) {
+                    tooltip.style.display = 'none';
+                }
+            });
+
+            tooltip.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                if (selectedText) {
+                    window.open(`https://www.google.com/search?q=${encodeURIComponent(selectedText)}`, '_blank');
+                    tooltip.style.display = 'none';
+                    window.getSelection().removeAllRanges();
+                }
+            });
+        })();
+    </script>
+    <style>
+        .selection-tooltip {
+            position: absolute;
+            background: linear-gradient(135deg, var(--color-accent-1), var(--color-accent-2));
+            color: #fff;
+            padding: 6px 14px;
+            border-radius: 99px;
+            font-size: 0.95rem;
+            font-family: var(--font-body);
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 10px rgba(6, 182, 212, 0.5);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            transition: transform 0.2s;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            pointer-events: auto;
+        }
+
+        .selection-tooltip:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 15px rgba(124, 58, 237, 0.6);
+        }
+    </style>
+
+    <script>
+        function copyCode(btn) {
+            const codeDiv = btn.parentElement;
+            // Clone to remove the button text if necessary
+            const clone = codeDiv.cloneNode(true);
+            const buttonToRemove = clone.querySelector('.copy-btn');
+            if (buttonToRemove) buttonToRemove.remove();
+
+            const text = clone.textContent.trim();
+            navigator.clipboard.writeText(text).then(() => {
+                const originalHtml = btn.innerHTML;
+                btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                setTimeout(() => { btn.innerHTML = originalHtml; }, 2000);
+            });
+        }
+    </script>
+
+</body>
+
+</html>
