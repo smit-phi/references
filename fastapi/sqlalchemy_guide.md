@@ -72,7 +72,7 @@ SQLAlchemy has two distinct layers. Most developers use both.
 │  Engine, Connection, Table, select()    │
 ├─────────────────────────────────────────┤
 │              DBAPI (PEP 249)            │
-│   psycopg2, asyncpg, aiosqlite, etc.   │
+│   psycopg2, asyncpg, aiosqlite, etc.    │
 ├─────────────────────────────────────────┤
 │              Database                   │
 │   PostgreSQL, MySQL, SQLite, etc.       │
